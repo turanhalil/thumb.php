@@ -109,7 +109,7 @@ Yani cache sürekli taze kalır ve gereksiz dosya birikmez.
 
 ---
 
-## Sonuç
+## Son Açıklama
 
 **thumb.php**, tek bir PHP dosyasıyla çok güçlü bir görsel yönetim altyapısı sunar:
 
