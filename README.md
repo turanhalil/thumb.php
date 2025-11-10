@@ -122,5 +122,6 @@ Yani cache sürekli taze kalır ve gereksiz dosya birikmez.
 
 **Sürüm:** 1.2  
 **Yazar:** turanhalil541@gmail.com
+
 **PHP sürümü:** 8.0 ve üzeri  
 **Lisans:** MIT
