@@ -35,7 +35,7 @@ Sadece görseli yeniden boyutlandırır.
 Resmin üzerine yazı (watermark) ekler.  
 Yazı, otomatik olarak görsele sığacak şekilde boyutlandırılır.
 ```html
-<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=KarademirMakina" alt="resminiz">
+<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=Siberp Bilisim" alt="resminiz">
 ```
 
 ---
@@ -43,7 +43,7 @@ Yazı, otomatik olarak görsele sığacak şekilde boyutlandırılır.
 ### Renkli watermark
 Varsayılan renk beyazdır. `color` parametresiyle istenen renk ayarlanabilir.
 ```html
-<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=KarademirMakina&color=BA2600" alt="resminiz">
+<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=Siberp Bilisim&color=BA2600" alt="resminiz">
 ```
 
 ---
@@ -52,7 +52,7 @@ Varsayılan renk beyazdır. `color` parametresiyle istenen renk ayarlanabilir.
 `pos` watermark konumunu belirler, `opacity` saydamlık oranını ayarlar.  
 `opacity=100` tamamen görünür, `opacity=0` görünmez.
 ```html
-<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=KarademirMakina&pos=tr&opacity=40" alt="resminiz">
+<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=Siberp Bilisim&pos=tr&opacity=40" alt="resminiz">
 ```
 
 ---
@@ -60,7 +60,7 @@ Varsayılan renk beyazdır. `color` parametresiyle istenen renk ayarlanabilir.
 ### Özel font boyutu
 Yazı boyutunu manuel olarak belirlemek istersen `size` parametresini kullanabilirsin.
 ```html
-<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=KarademirMakina&size=50" alt="resminiz">
+<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=Siberp Bilisim&size=50" alt="resminiz">
 ```
 
 ---
@@ -68,7 +68,7 @@ Yazı boyutunu manuel olarak belirlemek istersen `size` parametresini kullanabil
 ### Tam ortalanmış watermark
 Watermark’ı tam ortada göstermek için `pos=c` kullanılır.
 ```html
-<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=Karademir&pos=c&color=ffffff&opacity=70" alt="resminiz">
+<img src="thumb.php?src=upload/image/ornek.jpg&w=800&h=500&text=Siberp Bilisim&pos=c&color=ffffff&opacity=70" alt="resminiz">
 ```
 
 ---
