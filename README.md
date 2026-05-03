@@ -1,4 +1,6 @@
-# thumb.php v2.0
+# thumb.php v2.5
+
+PHP 8.5 versiyonuna göre güncellendi. artık php 8.5.x için sorunsuz olarak çalışır.
 
 Gelişmiş dinamik görsel işleme betiği. PHP GD eklentisiyle çalışır. Cache, watermark, transparan destek, border-radius ve object-fit özellikleriyle optimize edilmiştir.
 
