@@ -22,7 +22,7 @@ Gelişmiş dinamik görsel işleme betiği. PHP GD eklentisiyle çalışır. Cac
 | `w`       | Genişlik                                  | `400`                 |
 | `h`       | Yükseklik                                 | `300`                 |
 | `q`       | Kalite (1–100)                            | `90`                  |
-| `text`    | Watermark metni                           | `karademirmakina.com` |
+| `text`    | Watermark metni                           | `WATERMARK_METNI`     |
 | `pos`     | Yazı konumu (`tl`, `tr`, `bl`, `br`, `c`) | `br`                  |
 | `size`    | Font boyutu                               | `24`                  |
 | `opacity` | Saydamlık (0–1)                           | `0.5`                 |
@@ -42,7 +42,7 @@ Gelişmiş dinamik görsel işleme betiği. PHP GD eklentisiyle çalışır. Cac
 
 ### Watermark ekleme
 ```html
-<img src="thumb.php?src=upload/image.jpg&w=400&h=300&text=karademirmakina.com&pos=br&opacity=0.6&color=#BA2600">
+<img src="thumb.php?src=upload/image.jpg&w=400&h=300&text=WATERMARK_YAZISI&pos=br&opacity=0.6&color=#BA2600">
 ```
 
 ### Object-fit kullanımı
