@@ -93,7 +93,7 @@ Deny from all
 
 ##  Versiyon Bilgisi
 
-**thumb.php v2.0**
+**thumb.php v2.5**
 - Transparan destek (PNG/WebP)
 - Gün bazlı cache
 - Border-radius köşe desteği
@@ -104,5 +104,5 @@ Deny from all
 ---
 
 Yazar: turanhalil541@gmail.com
-PHP sürümü: 8.0 ve üzeri
-Lisans: MIT
+* PHP sürümü: 8.0 ve üzeri
+* Lisans: MIT
