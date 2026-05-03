@@ -4,6 +4,16 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_error.log');
 
+function normalizePath($path) {
+    return rtrim(str_replace('\\', '/', $path), '/') . '/';
+}
+
+function cleanOutput() {
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+}
+
 $cacheDir = __DIR__ . '/thumb_cache/';
 $allowedDirs = [
     realpath(__DIR__ . '/upload'),
@@ -11,9 +21,16 @@ $allowedDirs = [
     realpath(__DIR__ . '/images'),
 ];
 
-if (!is_dir($cacheDir)) {
-    mkdir($cacheDir, 0755, true);
+if (!is_dir($cacheDir) && !mkdir($cacheDir, 0755, true) && !is_dir($cacheDir)) {
+    http_response_code(500);
+    exit('cache error');
+}
+
+if (!file_exists($cacheDir . '/index.html')) {
     file_put_contents($cacheDir . '/index.html', '');
+}
+
+if (!file_exists($cacheDir . '/.htaccess')) {
     $ht = "Options -Indexes\n<FilesMatch '\.(php|phtml|php3|php4|php5|phps)$'>\nDeny from all\n</FilesMatch>";
     file_put_contents($cacheDir . '/.htaccess', $ht);
 }
@@ -37,14 +54,25 @@ $fullSrc = realpath(__DIR__ . '/' . $srcPath);
 if (!$fullSrc) {
     $fullSrc = realpath($src);
 }
+
 if (!$fullSrc || !file_exists($fullSrc)) {
     http_response_code(404);
     exit('no image');
 }
+
+$fullSrcNorm = normalizePath($fullSrc);
+
 $ok = false;
 foreach ($allowedDirs as $d) {
-    if ($d && str_starts_with($fullSrc, $d)) { $ok = true; break; }
+    if ($d) {
+        $dNorm = normalizePath($d);
+        if (str_starts_with($fullSrcNorm, $dNorm)) {
+            $ok = true;
+            break;
+        }
+    }
 }
+
 if (!$ok) {
     http_response_code(403);
     exit('forbidden');
@@ -54,32 +82,39 @@ $uniq = md5($fullSrc . '|' . $w . '|' . $h . '|' . $q . '|' . $text . '|' . $pos
 $cacheFile = $cacheDir . $uniq . '.webp';
 
 if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheTime)) {
+    cleanOutput();
     header('Content-Type: image/webp');
     readfile($cacheFile);
     exit;
 }
 
 $ext = strtolower(pathinfo($fullSrc, PATHINFO_EXTENSION));
+
+$srcImg = null;
 switch ($ext) {
     case 'jpg':
     case 'jpeg':
-        $srcImg = @imagecreatefromjpeg($fullSrc);
+        if (function_exists('imagecreatefromjpeg')) $srcImg = imagecreatefromjpeg($fullSrc);
         break;
     case 'png':
-        $srcImg = @imagecreatefrompng($fullSrc);
+        if (function_exists('imagecreatefrompng')) $srcImg = imagecreatefrompng($fullSrc);
         break;
     case 'gif':
-        $srcImg = @imagecreatefromgif($fullSrc);
+        if (function_exists('imagecreatefromgif')) $srcImg = imagecreatefromgif($fullSrc);
         break;
     case 'webp':
-        $srcImg = @imagecreatefromwebp($fullSrc);
+        if (function_exists('imagecreatefromwebp')) $srcImg = imagecreatefromwebp($fullSrc);
         break;
     case 'avif':
-        if (function_exists('imagecreatefromavif')) { $srcImg = @imagecreatefromavif($fullSrc); break; }
+        if (function_exists('imagecreatefromavif')) $srcImg = imagecreatefromavif($fullSrc);
+        break;
     default:
         exit('unsupported');
 }
-if (!$srcImg) exit('load error');
+
+if (!$srcImg instanceof GdImage) {
+    exit('load error');
+}
 
 $srcW = imagesx($srcImg);
 $srcH = imagesy($srcImg);
@@ -142,86 +177,19 @@ switch ($objectFit) {
         $offY = (int)(($h - $drawH) / 2);
         imagecopyresampled($dstImg, $srcImg, $offX, $offY, 0, 0, $drawW, $drawH, $srcW, $srcH);
         break;
-    default:
-        // default cover behavior
-        if ($srcRatio > $dstRatio) {
-            $newW = (int)($srcH * $dstRatio);
-            $srcX = (int)(($srcW - $newW) / 2);
-        } else {
-            $newH = (int)($srcW / $dstRatio);
-            $srcY = (int)(($srcH - $newH) / 2);
-        }
-        break;
 }
 
 if (!in_array($objectFit, ['contain','fill','none','scale-down'])) {
     imagecopyresampled($dstImg, $srcImg, 0, 0, $srcX, $srcY, $w, $h, $newW, $newH);
 }
 
-$tl = $tr = $br = $bl = 0;
-if (isset($_GET['br']) && strlen(trim($_GET['br'])) > 0) {
-    $raw = trim($_GET['br']);
-    $raw = str_replace(',', ' ', $raw);
-    $parts = preg_split('/\s+/', $raw, -1, PREG_SPLIT_NO_EMPTY);
-    $vals = [];
-    foreach ($parts as $p) {
-        if (preg_match('/^\d+(px)?$/i', $p)) {
-            $vals[] = (int)$p;
-        }
-    }
-    if (count($vals) === 1) {
-        $tl = $tr = $br = $bl = $vals[0];
-    } elseif (count($vals) === 2) {
-        $tl = $br = $vals[0];
-        $tr = $bl = $vals[1];
-    } elseif (count($vals) === 3) {
-        $tl = $vals[0];
-        $tr = $bl = $vals[1];
-        $br = $vals[2];
-    } elseif (count($vals) >= 4) {
-        list($tl, $tr, $br, $bl) = array_slice($vals, 0, 4);
-    }
-    $maxR = (int)(min($w, $h) / 2);
-    $tl = max(0, min($tl, $maxR));
-    $tr = max(0, min($tr, $maxR));
-    $br = max(0, min($br, $maxR));
-    $bl = max(0, min($bl, $maxR));
-}
-
-if ($tl || $tr || $br || $bl) {
-    $mask = imagecreatetruecolor($w, $h);
-    imagealphablending($mask, false);
-    imagesavealpha($mask, true);
-    $clear = imagecolorallocatealpha($mask, 0, 0, 0, 127);
-    imagefilledrectangle($mask, 0, 0, $w, $h, $clear);
-    $solid = imagecolorallocatealpha($mask, 0, 0, 0, 0);
-
-    imagefilledrectangle($mask, $tl, 0, $w - $tr, $h, $solid);
-    imagefilledrectangle($mask, 0, $tl, $w, $h - $bl, $solid);
-
-    if ($tl) imagefilledellipse($mask, $tl, $tl, $tl * 2, $tl * 2, $solid);
-    if ($tr) imagefilledellipse($mask, $w - $tr, $tr, $tr * 2, $tr * 2, $solid);
-    if ($br) imagefilledellipse($mask, $w - $br, $h - $br, $br * 2, $br * 2, $solid);
-    if ($bl) imagefilledellipse($mask, $bl, $h - $bl, $bl * 2, $bl * 2, $solid);
-
-    imagealphablending($dstImg, false);
-    imagesavealpha($dstImg, true);
-    for ($x = 0; $x < $w; $x++) {
-        for ($y = 0; $y < $h; $y++) {
-            $m = imagecolorat($mask, $x, $y);
-            $ma = ($m >> 24) & 0x7F;
-            if ($ma == 127) {
-                $c = imagecolorat($dstImg, $x, $y);
-                $rgba = imagecolorsforindex($dstImg, $c);
-                $col = imagecolorallocatealpha($dstImg, $rgba['red'], $rgba['green'], $rgba['blue'], 127);
-                imagesetpixel($dstImg, $x, $y, $col);
-            }
-        }
-    }
-    imagedestroy($mask);
-}
+$alphaFix = function($opacity) {
+    $a = (int)(127 - ($opacity / 100) * 127);
+    return max(0, min(127, $a));
+};
 
 if ($text && file_exists($fontFile)) {
+
     $fontSize = $fontSizeParam > 0 ? (int)$fontSizeParam : max(10, (int)($w / 20));
 
     $c = ltrim($colorHex, '#');
@@ -229,16 +197,12 @@ if ($text && file_exists($fontFile)) {
     $r = hexdec(substr($c, 0, 2));
     $g = hexdec(substr($c, 2, 2));
     $b = hexdec(substr($c, 4, 2));
-    $alpha = (int)(127 - ($opacity / 100) * 127);
+
+    $alpha = $alphaFix($opacity);
 
     $bbox = imagettfbbox($fontSize, 0, $fontFile, $text);
-    $tw = abs($bbox[2] - $bbox[0]);
-    $th = abs($bbox[5] - $bbox[1]);
-    if ($tw + 20 > $w) {
-        $scale = ($w - 20) / $tw;
-        $fontSize = max(5, (int)($fontSize * $scale));
-    }
-    $bbox = imagettfbbox($fontSize, 0, $fontFile, $text);
+    if ($bbox === false) exit('font error');
+
     $tw = abs($bbox[2] - $bbox[0]);
     $th = abs($bbox[5] - $bbox[1]);
 
@@ -252,12 +216,17 @@ if ($text && file_exists($fontFile)) {
         case 'c':  $x = (int)(($w - $tw) / 2); $y = (int)(($h + $th) / 2); break;
         default:   $x = 10; $y = $h - 10; break;
     }
+
     $txtCol = imagecolorallocatealpha($dstImg, $r, $g, $b, $alpha);
     imagettftext($dstImg, $fontSize, 0, (int)$x, (int)$y, $txtCol, $fontFile, $text);
 }
 
-imagewebp($dstImg, $cacheFile, $q);
+if (!imagewebp($dstImg, $cacheFile, $q)) {
+    http_response_code(500);
+    exit('webp save failed');
+}
 
+cleanOutput();
 header('Content-Type: image/webp');
 readfile($cacheFile);
 
